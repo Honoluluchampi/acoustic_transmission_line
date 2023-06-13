@@ -29,6 +29,7 @@ def main() :
   A = math.pi * a * a # cross sectional area
   c = 340  # speed of sound
   rho = 1.21 # density
+  Z_c = rho * c / A # characteristic impedance
 
   x = [ i * L / N for i in range(N) ] # x coord in the tube
   freq_start = 1
@@ -51,6 +52,8 @@ def main() :
       Zc = -1j / (w[i] * c_acs) # compliance term
 
       T_tube = np.matrix([[1 + Zi / Zc, 2 * Zi + Zi * Zi / Zc], [1 / Zc, 1 + Zi / Zc]])
+      # kl = k[i] * l
+      # T_tube = np.matrix([[math.cos(kl), 1j * Z_c * math.sin(kl)], [1j / Z_c * math.sin(kl), math.cos(kl)]])
 
       T = np.matmul(T_tube, T)
 
@@ -61,6 +64,7 @@ def main() :
   for z in Z_in :
     Z_mag.append(20 * math.log10(abs(z)))
 
+  plt.ylim(0, 150)
   plt.plot(freq, Z_mag)
   plt.savefig("simple_cylinder.png")
   plt.show()
