@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 class cylindrical_tube :
   def __init__(self, length, area, rho, c) :
@@ -23,22 +24,46 @@ class cylindrical_tube :
 def main() :
   N = 150  # number of segments
   L = 0.6  # total length
+  l = L / N
   a = 0.05  # radius of tube
+  A = math.pi * a * a # cross sectional area
   c = 340  # speed of sound
   rho = 1.21 # density
 
   x = [ i * L / N for i in range(N) ] # x coord in the tube
   freq_start = 1
-  freq_end = 300
+  freq_end = 3000
   df = 0.1
   freq = np.array([ freq_start + df * i for i in range(int((freq_end - freq_start) / df))])
   w = 2 * math.pi * freq # angular velocity
   k = w / c # wave number
   Z_rad = 0 # radiation impedance
 
-  # calc input impedance for all frequency
-  # for i in range (len(freq)) :
+  Z_in = []
 
+  # calc input impedance for all frequency
+  for i in range (len(freq)) :
+    T = np.matrix([[1, 0], [0, 1]])
+    for j in range (N-1, 0, -1) :
+      m_acs = 0.5 * rho * l / A # acoustic mass of slice
+      c_acs = A * l / (rho * c * c) # acoustic compliance
+      Zi = 1j * w[i] * m_acs # inertance term
+      Zc = -1j / (w[i] * c_acs) # compliance term
+
+      T_tube = np.matrix([[1 + Zi / Zc, 2 * Zi + Zi * Zi / Zc], [1 / Zc, 1 + Zi / Zc]])
+
+      T = np.matmul(T_tube, T)
+
+    Z = (T[0, 0] * Z_rad + T[0, 1]) / (T[1, 0] * Z_rad + T[1, 1])
+    Z_in.append(Z)
+
+  Z_mag = []
+  for z in Z_in :
+    Z_mag.append(20 * math.log10(abs(z)))
+
+  plt.plot(freq, Z_mag)
+  plt.savefig("simple_cylinder.png")
+  plt.show()
 
 if __name__ == "__main__" :
     main()
